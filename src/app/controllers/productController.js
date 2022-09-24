@@ -11,16 +11,7 @@ const productController = {
     //[GET] -> /product
     getAllProduct: asyncHandle(async (req, res, next) => {
         try {
-            const userId = req.userId;
-
-            const user = await User.findOne({ _id: userId });
             const products = await Product.find();
-
-            if (!user)
-                return res.status(401).json({
-                    status: "falied",
-                    message: "You're not authenticated",
-                });
 
             if (products.length === 0)
                 return res.status(200).json({
@@ -110,24 +101,16 @@ const productController = {
     //[PUT] -> /product/update/:id
     updateProduct: asyncHandle(async (req, res, next) => {
         try {
-            const userId = req.userId;
             const productId = ObjectId(req.params.id);
             const { categoryName } = req.body;
 
             const category = await Category.findOne({ name: categoryName });
-            const user = await User.findById(userId);
             const product = await Product.findOne({ _id: productId });
 
             if (!category)
                 return res.status(404).json({
                     status: "Falied",
                     message: "This category not found!",
-                });
-
-            if (!user)
-                return res.status(401).json({
-                    status: "falied",
-                    message: "You're not authenticated",
                 });
 
             if (!product) return res.status(404).json("Product not found");
@@ -201,17 +184,9 @@ const productController = {
     //[GET] -> /product/:id
     getOneProduct: asyncHandle(async (req, res, next) => {
         try {
-            const userId = req.userId;
             const productId = ObjectId(req.params.id);
 
             const product = await Product.findOne({ _id: productId });
-            const user = await User.findOne({ _id: userId });
-
-            if (!user)
-                return res.status(401).json({
-                    status: "falied",
-                    message: "You're not authenticated",
-                });
 
             if (!product)
                 return res.status(404).json({
@@ -297,15 +272,7 @@ const productController = {
     //[GET] -> /product/category/:categoryId
     getProductsByCategoryId: asyncHandle(async (req, res, next) => {
         try {
-            const userId = req.userId;
             const categoryId = req.params.categoryId;
-
-            const user = await User.findOne({ _id: userId });
-            if (!user)
-                return res.status(401).json({
-                    status: "falied",
-                    message: "You're not authenticated",
-                });
 
             const category = await Category.findOne({ _id: categoryId });
             if (!category)
