@@ -6,16 +6,7 @@ const aliasController = {
     //[GET] -> /alias
     getAllAlias: asyncHandle(async (req, res, next) => {
         try {
-            const userId = req.userId;
-
-            const user = await User.findOne({ _id: userId });
             const alias = await Alias.find();
-
-            if (!user)
-                return res.status(404).json({
-                    status: "Failed",
-                    message: "You're not authenticated",
-                });
 
             if (alias.length === 0)
                 return res.status(404).json({

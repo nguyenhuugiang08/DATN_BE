@@ -196,7 +196,7 @@ const productController = {
 
             res.status(200).json({
                 status: "success",
-                data: { product },
+                data: product,
             });
         } catch (error) {
             return res.status(500).json({
