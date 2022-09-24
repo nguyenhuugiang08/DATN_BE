@@ -7,7 +7,7 @@ const checkAdmin = require("../middleware/verifyAdmin");
 const upload = require("../middleware/uploadFile");
 
 router.get("/trash", verifyAccessToken, checkAdmin, newsController.getTrashNews);
-router.get("/:id", verifyAccessToken, newsController.getNewsById);
+router.get("/:id", newsController.getNewsById);
 router.patch("/restore/:id", verifyAccessToken, checkAdmin, newsController.restoreNews);
 router.delete("/delete/:id", verifyAccessToken, checkAdmin, newsController.deleteNews);
 router.put(
@@ -24,6 +24,6 @@ router.post(
     upload.array("pictures"),
     newsController.createNews
 );
-router.get("/", verifyAccessToken, newsController.getAllNews);
+router.get("/", newsController.getAllNews);
 
 module.exports = router;

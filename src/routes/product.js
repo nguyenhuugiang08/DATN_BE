@@ -6,7 +6,7 @@ const checkAdmin = require("../middleware/verifyAdmin");
 
 const productController = require("../app/controllers/productController");
 
-router.get("/category/:categoryId", verifyAccessToken, productController.getProductsByCategoryId);
+router.get("/category/:categoryId", productController.getProductsByCategoryId);
 router.patch("/restore/:id", verifyAccessToken, checkAdmin, productController.restoreProduct);
 router.delete("/delete/:id", verifyAccessToken, checkAdmin, productController.deleteProduct);
 router.put(
@@ -24,7 +24,7 @@ router.post(
     productController.createProduct
 );
 router.get("/trash", verifyAccessToken, checkAdmin, productController.getTrashProduct);
-router.get("/:id", verifyAccessToken, productController.getOneProduct);
-router.get("/", verifyAccessToken, productController.getAllProduct);
+router.get("/:id", productController.getOneProduct);
+router.get("/", productController.getAllProduct);
 
 module.exports = router;
