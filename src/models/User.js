@@ -6,7 +6,6 @@ const mongoose_delete = require("mongoose-delete");
 //biểu thứ chính quy check các filed trong db
 const regexEmail =
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-const regexName = /^[a-zA-Z0-9_ ]{2,}$/;
 const regexPhone = /^[0-9]{9,}$/;
 
 const userSchema = new Schema(
@@ -14,7 +13,6 @@ const userSchema = new Schema(
         name: {
             type: String,
             required: true,
-            match: [regexName, "Tên của bạn phải có dạng ..."],
             trim: true,
         },
         surname: { type: String, trim: true, required: true },
