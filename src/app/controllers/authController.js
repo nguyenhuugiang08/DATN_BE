@@ -54,6 +54,12 @@ const authController = {
                 });
             }
 
+            if (!user.isActive)
+            return res.status(400).json({
+                status: "Failed",
+                message: "Your account is inactive!",
+            });
+
             if (bcrypt.compareSync(req.body.password, user.password)) {
                 const accessToken = generateAccessToken(user);
                 const refreshToken = generateRefreshToken(user);
@@ -78,11 +84,6 @@ const authController = {
                 });
             }
 
-            if (!user.isActive)
-                return res.status(400).json({
-                    status: "Failed",
-                    message: "Your account is inactive!",
-                });
         } catch (error) {
             res.status(500).json({
                 status: "failed",
