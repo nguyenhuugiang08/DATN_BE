@@ -12,6 +12,7 @@ const authController = {
     register: asyncHandle(async (req, res) => {
         try {
             const newUser = new User(req.body);
+            await newUser.save();
 
             bcrypt.hash(newUser.email, 10, function (error, hashedEmail) {
                 if (error) {
@@ -21,15 +22,13 @@ const authController = {
                         newUser.email,
                         "Xác thực tài khoản của khách hàng",
                         `<div>Xin chào ${newUser.surname} ${newUser.name}</div>
-                        <div>Anh/chị đã yêu cầu đổi mật khẩu tại <b>EGA Style</b>.</div>
-                        <div>Anh/chị vui lòng truy cập vào liên kết dưới đây để thay đổi mật khẩu của Anh/chị nhé.</div>
-                        <a href="${process.env.APP_URL}/api/v1/user/verify?email=${newUser.email}&token=${hashedEmail}"> Verify </a>
+                        <div>Anh/chị đã đăng ký thành công tài khoản tại <b>EGA Style</b>.</div>
+                        <div>Anh/chị vui lòng truy cập vào liên kết dưới đây để kích hoạt tài khoản của Anh/chị nhé.</div>
+                        <button><a href="${process.env.APP_URL}/api/v1/user/verify?email=${newUser.email}&token=${hashedEmail}"> Verify </a></button>
                         `
                     );
                 }
             });
-
-            await newUser.save();
 
             res.status(200).json({
                 status: "success",
@@ -49,7 +48,10 @@ const authController = {
             const user = await User.findOne({ email: req.body.email });
 
             if (!user) {
-                res.status(404).json("Wrong email");
+                res.status(404).json({
+                    status: "Failed",
+                    message: "Wrong email",
+                });
             }
 
             if (bcrypt.compareSync(req.body.password, user.password)) {
@@ -58,7 +60,7 @@ const authController = {
 
                 res.cookie("refreshToken", refreshToken, {
                     httpOnly: true,
-                    secure: false,
+                    secure: true,
                     path: "/",
                     sameSite: "strict",
                 });
@@ -82,7 +84,10 @@ const authController = {
                     message: "Your account is inactive!",
                 });
         } catch (error) {
-            res.status(500).json(error);
+            res.status(500).json({
+                status: "failed",
+                message: error.message,
+            });
         }
     }),
 
@@ -92,7 +97,11 @@ const authController = {
 
         const user = await User.findById(userId);
 
-        if (!user) return res.status(404).json("User not found");
+        if (!user)
+            return res.status(404).json({
+                status: "failed",
+                message: "User not found",
+            });
 
         // create new acccess token and refresh token
         const newAccessToken = generateAccessToken(user);
@@ -100,7 +109,7 @@ const authController = {
 
         res.cookie("refreshToken", newRefreshToken, {
             httpOnly: true,
-            secure: false,
+            secure: true,
             path: "/",
             sameSite: "strict",
         });
