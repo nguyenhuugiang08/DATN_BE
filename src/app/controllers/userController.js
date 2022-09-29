@@ -135,7 +135,7 @@ const userController = {
         }
     }),
 
-    //[GET] -> /user/reset-password
+    //[PATCH] -> /user/reset-password
     resetPassword: asyncHandle(async (req, res, next) => {
         const { newPassword } = req.body;
         const email = req.query.email;
