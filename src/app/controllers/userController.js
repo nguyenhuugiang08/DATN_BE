@@ -117,7 +117,7 @@ const userController = {
                         `<div>Xin chào ${user.surname} ${user.name}</div>
                             <div>Anh/chị đã yêu cầu đổi mật khẩu tại <b>EGA Style</b>.</div>
                             <div>Anh/chị vui lòng truy cập vào liên kết dưới đây để thay đổi mật khẩu của Anh/chị nhé.</div>
-                            <a href="${process.env.APP_URL}/api/v1/user/reset-password?email=${user.email}&token=${hashedEmail}"> Verify </a>
+                            <a href="${process.env.APP_URL}/account/reset-password?email=${user.email}&token=${hashedEmail}"> Verify </a>
                             `
                     );
                 }
