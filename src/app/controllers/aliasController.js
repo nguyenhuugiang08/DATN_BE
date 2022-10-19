@@ -9,9 +9,10 @@ const aliasController = {
             const alias = await Alias.find();
 
             if (alias.length === 0)
-                return res.status(404).json({
-                    status: "Failed",
-                    message: "Alias not found",
+                return res.status(200).json({
+                    status: "Success",
+                    message: "No data",
+                    data: { alias },
                 });
 
             return res.status(200).json({
@@ -141,15 +142,41 @@ const aliasController = {
             const alias = await Alias.findDeleted();
 
             if (alias.length === 0)
-                return res.status(404).json({
-                    status: "failed",
-                    message: "Product not found",
+                return res.status(200).json({
+                    status: "Success",
+                    message: "No data",
+                    data: { alias },
                 });
 
             return res.status(200).json({
                 status: "Success",
                 ressult: alias.length,
                 data: { alias },
+            });
+        } catch (error) {
+            return res.status(500).json({
+                status: "Failed",
+                message: error.message,
+            });
+        }
+    }),
+
+    // [GET] -> /alias/:id
+    getAliasById: asyncHandle(async (req, res, next) => {
+        try {
+            const aliasId = req.params.id;
+            console.log(aliasId);
+            const alias = await Alias.findOne({ _id: aliasId });
+
+            if (!alias)
+                return res.status(404).json({
+                    status: "Failed",
+                    message: "Alias not found",
+                });
+
+            return res.status(200).json({
+                status: "Success",
+                data: alias,
             });
         } catch (error) {
             return res.status(500).json({

@@ -6,18 +6,28 @@ const categoryController = {
     //[GET] -> /category
     getAllCategory: asyncHandle(async (req, res, next) => {
         try {
-            const categories = await Category.find();
+            let categories = await Category.find();
+            const listCategories = [];
+
+            console.log(categories);
 
             if (categories.length === 0)
-                return res.status(404).json({
+                return res.status(200).json({
                     status: "Success",
                     message: "No data",
+                    data: { listCategories },
                 });
+
+            for (let category of categories) {
+                const alias = await Alias.findOne({ _id: category.aliasId });
+                category = { ...category._doc, aliasName: alias.name };
+                listCategories.push(category);
+            }
 
             return res.status(200).json({
                 status: "Success",
-                result: categories.length,
-                data: { categories },
+                result: listCategories.length,
+                data: { listCategories },
             });
         } catch (error) {
             return res.status(500).json({
@@ -166,17 +176,25 @@ const categoryController = {
     getTrashCategory: asyncHandle(async (req, res, next) => {
         try {
             const categories = await Category.findDeleted();
+            const listCategories = [];
 
             if (categories.length === 0)
                 return res.status(200).json({
                     status: "Success",
                     message: "No data",
+                    data: { listCategories },
                 });
+
+            for (let category of categories) {
+                const alias = await Alias.findOne({ _id: category.aliasId });
+                category = { ...category._doc, aliasName: alias.name };
+                listCategories.push(category);
+            }
 
             return res.status(200).json({
                 status: "Success",
                 result: categories.length,
-                data: { categories },
+                data: { listCategories },
             });
         } catch (error) {
             return res.status(500).json({
@@ -193,11 +211,20 @@ const categoryController = {
 
             const categories = await Category.find({ aliasId: aliasId });
 
+            const listCategories = [];
+
             if (categories.length === 0)
                 return res.status(200).json({
                     status: "Success",
                     message: "No data",
+                    data: { listCategories },
                 });
+
+            for (let category of categories) {
+                const alias = await Alias.findOne({ _id: category.aliasId });
+                category = { ...category._doc, aliasName: alias.name };
+                listCategories.push(category);
+            }
 
             return res.status(200).json({
                 status: "Success",
@@ -220,14 +247,16 @@ const categoryController = {
             const category = await Category.findOne({ _id: id });
 
             if (!category)
-                return res.status(200).json({
-                    status: "Success",
+                return res.status(404).json({
+                    status: "Failed",
                     message: "Category not found",
                 });
 
+            const alias = await Alias.findOne({ _id: category.aliasId });
+
             return res.status(200).json({
                 status: "Success",
-                data: category,
+                data: { ...category._doc, aliasName: alias.name },
             });
         } catch (error) {
             return res.status(500).json({

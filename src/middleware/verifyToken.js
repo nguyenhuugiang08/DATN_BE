@@ -5,6 +5,7 @@ const asyncHanle = require("./asyncHandle");
 //VERIFY ACCESS TOKEN
 const verifyAccessToken = asyncHanle(async (req, res, next) => {
     const token = req.headers.token;
+    console.log(token);
     if (token) {
         const accessToken = token.split(" ")[1];
         jwt.verify(accessToken, process.env.ACCESS_TOKEN, (err, user) => {
@@ -23,6 +24,8 @@ const verifyAccessToken = asyncHanle(async (req, res, next) => {
 //VERIFY REFESH TOKEN
 const verifyRefeshToken = asyncHanle(async (req, res, next) => {
     const refreshToken = req.cookies.refreshToken;
+
+    console.log(req.cookies);
 
     if (!refreshToken) return res.status(401).json("You're not authenticated");
 

@@ -5,6 +5,7 @@ const aliasRouter = require("./alias");
 const categoryRouter = require("./category");
 const newsRouter = require("./news");
 const orderRouter = require("./order");
+const otherRouter = require("./others");
 
 function route(app) {
     app.use("/api/v1/product/", productRouter);
@@ -14,6 +15,7 @@ function route(app) {
     app.use("/api/v1/category/", categoryRouter);
     app.use("/api/v1/news/", newsRouter);
     app.use("/api/v1/order/", orderRouter);
+    app.use("/api/v1", otherRouter);
 }
 
 module.exports = route;

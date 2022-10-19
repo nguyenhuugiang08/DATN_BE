@@ -12,17 +12,25 @@ const productController = {
     getAllProduct: asyncHandle(async (req, res, next) => {
         try {
             const products = await Product.find();
+            const listProducts = [];
 
             if (products.length === 0)
                 return res.status(200).json({
                     status: "Success",
                     message: "No data",
+                    data: { listProducts },
                 });
+
+            for (let product of products) {
+                const category = await Category.findOne({ _id: product.categoryId });
+                product = { ...product._doc, categoryName: category.name };
+                listProducts.push(product);
+            }
 
             res.status(200).json({
                 status: "success",
-                result: products.length,
-                data: { products },
+                result: listProducts.length,
+                data: { listProducts },
             });
         } catch (error) {
             return res.json(error);
@@ -33,6 +41,7 @@ const productController = {
     createProduct: asyncHandle(async (req, res, next) => {
         try {
             const { name, sizes, colors, categoryName } = req.body;
+            console.log(req.body);
 
             const productName = await Product.findOne({ name: name });
 
@@ -74,13 +83,8 @@ const productController = {
                 fs.unlinkSync(path);
             }
 
-            const newSizes = sizes.split(",");
-            const newColors = colors.split(",");
-
             const product = new Product({
                 ...req.body,
-                sizes: newSizes,
-                colors: newColors,
                 thumbnails: urls,
                 categoryId: category._id,
             });
@@ -103,6 +107,7 @@ const productController = {
         try {
             const productId = ObjectId(req.params.id);
             const { categoryName } = req.body;
+            console.log(req.body);
 
             const category = await Category.findOne({ name: categoryName });
             const product = await Product.findOne({ _id: productId });
@@ -192,11 +197,14 @@ const productController = {
                 return res.status(404).json({
                     status: "failed",
                     message: `No products found with id ${productId}`,
+                    data: product,
                 });
+
+            const category = await Category.findOne({ _id: product.categoryId });
 
             res.status(200).json({
                 status: "success",
-                data: product,
+                data: { ...product._doc, categoryName: category.name },
             });
         } catch (error) {
             return res.status(500).json({
@@ -210,16 +218,14 @@ const productController = {
     restoreProduct: asyncHandle(async (req, res, next) => {
         try {
             const userId = req.userId;
-            const productId = ObjectId(req.params.id);
+            const productId = req.params.id;
 
             const user = await User.findById(userId);
-            const product = await Product.findById({ _id: productId });
+            const product = await Product.findDeleted({ _id: productId });
 
             if (!user) return res.status(401).json("You're not authenticated");
 
             if (!product) return res.status(404).json("Product not found");
-
-            if (!product.deleted) return res.status(404).json("Product has never been deleted");
 
             await Product.restore({ _id: productId });
 
@@ -239,27 +245,26 @@ const productController = {
     //[GET] -> /product/trash
     getTrashProduct: asyncHandle(async (req, res, next) => {
         try {
-            const userId = req.userId;
-
-            const user = await User.findOne({ _id: userId });
             const products = await Product.findDeleted();
-
-            if (!user)
-                return res.status(401).json({
-                    status: "falied",
-                    message: "You're not authenticated",
-                });
+            const listProducts = [];
 
             if (products.length === 0)
                 return res.status(200).json({
                     status: "Success",
                     message: "No data",
+                    data: { listProducts },
                 });
+
+            for (let product of products) {
+                const category = await Category.findOne({ _id: product.categoryId });
+                product = { ...product._doc, categoryName: category.name };
+                listProducts.push(product);
+            }
 
             res.status(200).json({
                 status: "success",
-                result: products.length,
-                data: { products },
+                result: listProducts.length,
+                data: { listProducts },
             });
         } catch (error) {
             return res.status(500).json({
@@ -287,6 +292,7 @@ const productController = {
                 return res.status(200).json({
                     status: "Success",
                     message: "No data",
+                    data: { products },
                 });
 
             res.status(200).json({

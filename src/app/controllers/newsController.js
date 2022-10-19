@@ -15,6 +15,7 @@ const newsController = {
                 return res.status(200).json({
                     status: "Success",
                     message: "No data",
+                    data: { news },
                 });
             }
 
@@ -179,6 +180,7 @@ const newsController = {
                 return res.status(200).json({
                     status: "Success",
                     message: "No data",
+                    data: { news },
                 });
             }
 
@@ -195,7 +197,7 @@ const newsController = {
         }
     }),
 
-    // [GET] -> /news/trash
+    // [GET] -> /news/:id
     getNewsById: asyncHandle(async (req, res, next) => {
         try {
             const id = req.params.id;

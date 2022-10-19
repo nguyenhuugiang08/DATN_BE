@@ -98,6 +98,7 @@ const userController = {
     forgotPassword: asyncHandle(async (req, res, next) => {
         try {
             const { email } = req.body;
+            console.log(email);
 
             const user = await User.findOne({ email: email });
 
