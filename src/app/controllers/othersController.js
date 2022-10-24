@@ -40,7 +40,7 @@ const othersController = {
             const flashSaleProducts = await Product.find({ discount: "50" }).limit(5);
 
             // get all products'category is "Đồ thể thao" and limit 5 documents
-            const sportsCategory = await Category.findOne({ name: "Đồ thể thao" });
+            const sportsCategory = await Category.findOne({ name: "Đồ thể thao" }) ?? [];
             let sportsProducts = [];
             if (sportsCategory) {
                 const products = await Product.find({ categoryId: sportsCategory._id }).limit(5);
@@ -48,7 +48,7 @@ const othersController = {
             }
 
             // get all products'
-            const swimCategory = await Category.findOne({ name: "Đồ bơi" });
+            const swimCategory = await Category.findOne({ name: "Đồ bơi" }) ?? [];
             let swimProducts = [];
             if (swimCategory) {
                 const products = await Product.find({ categoryId: sportsCategory._id }).limit(5);
@@ -60,7 +60,6 @@ const othersController = {
             let springProducts = [];
             if (springCategory) {
                 const products = await Product.find({ categoryId: springCategory._id }).limit(10);
-                console.log("a3");
                 springProducts = [...products];
             }
             // get product summer collection
@@ -68,7 +67,6 @@ const othersController = {
             let summerProducts = [];
             if (summerCategory) {
                 const products = await Product.find({ categoryId: summerCategory._id }).limit(10);
-                console.log("a4");
                 summerProducts = [...products];
             }
             // get product winter collection
@@ -76,14 +74,57 @@ const othersController = {
             let winterProducts = [];
             if (winterCategory) {
                 const products = await Product.find({ categoryId: winterCategory._id }).limit(10);
-                console.log("a5");
                 winterProducts = [...products];
             }
+
+            // get categories which are feature categories
+            const dressCategory = await Category.find({ name: "Đầm" });
+            const vestCategory = await Category.find({ name: "Vest-Blazer" }) ?? [];
+            const sleepCategory = await Category.find({ name: "Đồ ngủ" }) ?? [];
+            const shirtCategory = await Category.find({ name: "Áo sơ mi" }) ?? [];
 
             return res.status(200).json({
                 status: "Success",
                 data: {
                     bannerUrls,
+                    egaFashions: [
+                        {
+                            categoryName: "Đầm",
+                            number: dressCategory.length,
+                            thumbnail:
+                                "https://bizweb.dktcdn.net/thumb/large/100/448/042/themes/876420/assets/season_coll_1_img.png?1666596948466",
+                        },
+                        {
+                            categoryName: "Vest-Blazer",
+                            number: vestCategory.length,
+                            thumbnail:
+                                "https://bizweb.dktcdn.net/thumb/large/100/448/042/themes/876420/assets/season_coll_2_img.png?1666596948466",
+                        },
+                        {
+                            categoryName: "Đồ thể thao",
+                            number: sportsCategory.length,
+                            thumbnail:
+                                "https://bizweb.dktcdn.net/thumb/large/100/448/042/themes/876420/assets/season_coll_3_img.png?1666596948466",
+                        },
+                        {
+                            categoryName: "Đồ bơi",
+                            number: swimCategory.length,
+                            thumbnail:
+                                "https://bizweb.dktcdn.net/thumb/large/100/448/042/themes/876420/assets/season_coll_4_img.png?1666596948466",
+                        },
+                        {
+                            categoryName: "Đồ ngủ",
+                            number: sleepCategory.length,
+                            thumbnail:
+                                "https://bizweb.dktcdn.net/thumb/large/100/448/042/themes/876420/assets/season_coll_5_img.png?1666596948466",
+                        },
+                        {
+                            categoryName: "Áo sơ mi",
+                            number: shirtCategory.length,
+                            thumbnail:
+                                "https://bizweb.dktcdn.net/thumb/large/100/448/042/themes/876420/assets/season_coll_6_img.png?1666596948466",
+                        },
+                    ],
                     news,
                     featuredProducts: [
                         { title: "Hàng hiệu -50%", data: flashSaleProducts },
