@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 
 const authController = require("../app/controllers/authController");
-const { verifyRefeshToken } = require("../middleware/verifyToken");
+const { verifyRefeshToken, verifyAccessToken } = require("../middleware/verifyToken");
+const checkAdmin = require("../middleware/verifyAdmin");
 
 // REGISTER
 router.post("/register", authController.register);
@@ -14,6 +15,9 @@ router.post("/login", authController.login);
 router.post("/refresh", verifyRefeshToken, authController.requestRefreshToken);
 
 //LOGOUT
-router.post("/logout", authController.logout)
+router.post("/logout", authController.logout);
+
+//Get Users
+router.get("/", verifyAccessToken, checkAdmin, authController.getUsers);
 
 module.exports = router;

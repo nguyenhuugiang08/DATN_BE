@@ -10,10 +10,6 @@ const CategorySchema = new Schema(
             trim: true,
             unique: true,
         },
-        aliasId: {
-            type: Schema.Types.ObjectId,
-            ref: "aliases",
-        },
     },
     {
         timestamps: true,

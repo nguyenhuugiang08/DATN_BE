@@ -6,12 +6,20 @@ const { ObjectId } = require("mongodb");
 const uploadFile = require("../../config/cloudinary");
 const cloudinary = require("cloudinary");
 const fs = require("fs");
+const DB_RESOURCE = require("../../base/enum");
+const Thumbnail = require("../../models/Thumbnail");
+const Size = require("../../models/Size");
+const Color = require("../../models/Color");
 
 const productController = {
     //[GET] -> /product
-    getAllProduct: asyncHandle(async (req, res, next) => {
+    getProductByFilter: asyncHandle(async (req, res, next) => {
         try {
-            const products = await Product.find();
+            const { page } = req.query;
+            const limit = page * DB_RESOURCE.LIMIT_RECORD;
+            const skipRecords = (page - 1) * DB_RESOURCE.LIMIT_RECORD;
+
+            const products = await Product.find().limit(limit).skip(skipRecords);
             const listProducts = [];
 
             if (products.length === 0)
@@ -22,8 +30,19 @@ const productController = {
                 });
 
             for (let product of products) {
-                const category = await Category.findOne({ _id: product.categoryId });
-                product = { ...product._doc, categoryName: category.name };
+                product = await product.populate("category", "name");
+
+                const thumbnails = await Thumbnail.find(
+                    {
+                        _id: { $in: product.thumbnails },
+                    },
+                    "url urlId -_id"
+                );
+
+                const sizes = await Size.find({
+                    _id: { $in: product.sizes },
+                });
+                product = { ...product._doc, thumbnails, sizes };
                 listProducts.push(product);
             }
 
@@ -40,20 +59,13 @@ const productController = {
     //[POST] -> /product/create
     createProduct: asyncHandle(async (req, res, next) => {
         try {
-            const { name, sizes, colors, categoryName } = req.body;
-            console.log(req.body);
+            const { name, sizes, colors, category } = req.body;
 
             const productName = await Product.findOne({ name: name });
 
-            if (!categoryName)
-                return res.status(400).json({
-                    status: "Falied",
-                    message: "Missing category name",
-                });
+            const categoryRecord = await Category.findOne({ _id: category });
 
-            const category = await Category.findOne({ name: categoryName });
-
-            if (!category)
+            if (!categoryRecord)
                 return res.status(404).json({
                     status: "Falied",
                     message: "This category not found!",
@@ -73,20 +85,25 @@ const productController = {
 
             const uploader = async (path) => await uploadFile.uploads(path, "thumbnails");
 
-            const urls = [];
-
+            const thumbnails = [];
             const files = req.files;
             for (const file of files) {
                 const { path } = file;
                 const newPath = await uploader(path);
-                urls.push(newPath);
+                const thumbnail = new Thumbnail({
+                    ...newPath,
+                });
+                await thumbnail.save();
+                thumbnails.push(thumbnail);
                 fs.unlinkSync(path);
             }
 
             const product = new Product({
                 ...req.body,
-                thumbnails: urls,
-                categoryId: category._id,
+                thumbnails: thumbnails.map((thumbnail) => thumbnail._id),
+                sizes: sizes.map((size) => JSON.parse(size)._id),
+                colors: colors.map((color) => JSON.parse(color)._id),
+                category: category,
             });
             await product.save();
 
@@ -106,39 +123,40 @@ const productController = {
     updateProduct: asyncHandle(async (req, res, next) => {
         try {
             const productId = ObjectId(req.params.id);
-            const { categoryName } = req.body;
-            console.log(req.body);
-
-            const category = await Category.findOne({ name: categoryName });
             const product = await Product.findOne({ _id: productId });
-
-            if (!category)
-                return res.status(404).json({
-                    status: "Falied",
-                    message: "This category not found!",
-                });
+            const { sizes, colors } = req.body;
 
             if (!product) return res.status(404).json("Product not found");
 
             const uploader = async (path) => await uploadFile.uploads(path, "thumbnails");
 
-            const urls = [];
+            const thumbnails = [];
 
             const files = req.files;
             for (const file of files) {
                 const { path } = file;
                 const newPath = await uploader(path);
-                urls.push(newPath);
+                const thumbnail = new Thumbnail({
+                    ...newPath,
+                });
+                await thumbnail.save();
+                thumbnails.push(thumbnail);
                 fs.unlinkSync(path);
             }
 
-            for (const thumbnail of product.thumbnails) {
+            for (const thumbnailId of product.thumbnails) {
+                const thumbnail = await Thumbnail.find({ _id: thumbnailId });
                 await cloudinary.uploader.destroy(`thumbnails/${thumbnail.urlId}`);
             }
 
             await Product.updateOne(
                 { _id: productId },
-                { ...req.body, thumbnails: urls, categoryId: category._id }
+                {
+                    ...req.body,
+                    sizes: sizes.map((size) => JSON.parse(size)._id),
+                    colors: colors.map((color) => JSON.parse(color)._id),
+                    thumbnails: thumbnails.map((thumbnail) => thumbnail._id),
+                }
             );
 
             res.status(200).json({
@@ -191,7 +209,7 @@ const productController = {
         try {
             const productId = ObjectId(req.params.id);
 
-            const product = await Product.findOne({ _id: productId });
+            const product = await Product.findOne({ _id: productId }).populate("category", "name");
 
             if (!product)
                 return res.status(404).json({
@@ -200,11 +218,24 @@ const productController = {
                     data: product,
                 });
 
-            const category = await Category.findOne({ _id: product.categoryId });
+            const thumbnails = await Thumbnail.find(
+                {
+                    _id: { $in: product.thumbnails },
+                },
+                "url urlId -_id"
+            );
+
+            const sizes = await Size.find({
+                _id: { $in: product.sizes },
+            });
+
+            const colors = await Color.find({
+                _id: { $in: product.colors },
+            });
 
             res.status(200).json({
                 status: "success",
-                data: { ...product._doc, categoryName: category.name },
+                data: { ...product._doc, thumbnails, sizes, colors },
             });
         } catch (error) {
             return res.status(500).json({

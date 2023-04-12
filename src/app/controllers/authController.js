@@ -55,10 +55,10 @@ const authController = {
             }
 
             if (!user.isActive)
-            return res.status(400).json({
-                status: "Failed",
-                message: "Your account is inactive!",
-            });
+                return res.status(400).json({
+                    status: "Failed",
+                    message: "Your account is inactive!",
+                });
 
             if (bcrypt.compareSync(req.body.password, user.password)) {
                 const accessToken = generateAccessToken(user);
@@ -83,7 +83,6 @@ const authController = {
                     message: "Wrong password",
                 });
             }
-
         } catch (error) {
             res.status(500).json({
                 status: "failed",
@@ -125,6 +124,26 @@ const authController = {
             status: "success",
             message: "logged out successfully!",
         });
+    }),
+
+    //[GET] /auth
+    getUsers: asyncHandle(async (req, res, next) => {
+        try {
+            const users = await User.find();
+
+            res.status(200).json({
+                status: "Success",
+                result: users.length,
+                data: {
+                    users,
+                },
+            });
+        } catch (error) {
+            res.status(500).json({
+                status: "failed",
+                message: error.message,
+            });
+        }
     }),
 };
 

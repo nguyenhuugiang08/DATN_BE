@@ -25,6 +25,6 @@ router.post(
 );
 router.get("/trash", verifyAccessToken, checkAdmin, productController.getTrashProduct);
 router.get("/:id", productController.getOneProduct);
-router.get("/", productController.getAllProduct);
+router.get("/", productController.getProductByFilter);
 
 module.exports = router;
