@@ -102,7 +102,10 @@ const productController = {
                 ...req.body,
                 thumbnails: thumbnails.map((thumbnail) => thumbnail._id),
                 sizes: sizes.map((size) => JSON.parse(size)._id),
-                colors: colors.map((color) => JSON.parse(color)._id),
+                colors:
+                    typeof colors === "array"
+                        ? colors.map((color) => JSON.parse(color)._id)
+                        : JSON.parse(colors)._id,
                 category: category,
             });
             await product.save();
@@ -309,15 +312,22 @@ const productController = {
     getProductsByCategoryId: asyncHandle(async (req, res, next) => {
         try {
             const categoryId = req.params.categoryId;
+            const minPrice = req.query.minPrice;
+            const maxPrice = req.query.maxPrice;
 
-            const category = await Category.findOne({ _id: categoryId });
+            const category = await Category.findOne({
+                _id: categoryId,
+            });
             if (!category)
                 return res.status(404).json({
                     status: "Falied",
                     message: "This category not found!",
                 });
 
-            const products = await Product.find({ categoryId: categoryId });
+            const products = await Product.find({
+                category: categoryId,
+                price: { $gte: minPrice, $lte: maxPrice },
+            });
 
             if (products.length === 0)
                 return res.status(200).json({
@@ -326,10 +336,28 @@ const productController = {
                     data: { products },
                 });
 
+            const listProducts = [];
+            for (let product of products) {
+                product = await product.populate("category", "name");
+
+                const thumbnails = await Thumbnail.find(
+                    {
+                        _id: { $in: product.thumbnails },
+                    },
+                    "url urlId -_id"
+                );
+
+                const sizes = await Size.find({
+                    _id: { $in: product.sizes },
+                });
+                product = { ...product._doc, thumbnails, sizes };
+                listProducts.push(product);
+            }
+
             res.status(200).json({
                 status: "success",
                 result: products.length,
-                data: { products },
+                data: { products: listProducts },
             });
         } catch (error) {
             return res.status(500).json({
