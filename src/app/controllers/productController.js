@@ -42,7 +42,11 @@ const productController = {
                 const sizes = await Size.find({
                     _id: { $in: product.sizes },
                 });
-                product = { ...product._doc, thumbnails, sizes };
+
+                const colors = await Color.find({
+                    _id: { $in: product.colors },
+                });
+                product = { ...product._doc, thumbnails, sizes, colors };
                 listProducts.push(product);
             }
 
@@ -103,7 +107,7 @@ const productController = {
                 thumbnails: thumbnails.map((thumbnail) => thumbnail._id),
                 sizes: sizes.map((size) => JSON.parse(size)._id),
                 colors:
-                    typeof colors === "array"
+                    typeof colors === "object"
                         ? colors.map((color) => JSON.parse(color)._id)
                         : JSON.parse(colors)._id,
                 category: category,
@@ -152,15 +156,17 @@ const productController = {
                 await cloudinary.uploader.destroy(`thumbnails/${thumbnail.urlId}`);
             }
 
-            await Product.updateOne(
-                { _id: productId },
-                {
-                    ...req.body,
-                    sizes: sizes.map((size) => JSON.parse(size)._id),
-                    colors: colors.map((color) => JSON.parse(color)._id),
-                    thumbnails: thumbnails.map((thumbnail) => thumbnail._id),
-                }
-            );
+            const dataUpdate = {
+                ...req.body,
+                sizes: sizes.map((size) => JSON.parse(size)._id),
+                colors:
+                    typeof colors === "object"
+                        ? colors.map((color) => JSON.parse(color)._id)
+                        : JSON.parse(colors)._id,
+                thumbnails: thumbnails.map((thumbnail) => thumbnail._id),
+            };
+
+            await Product.updateOne({ _id: productId }, dataUpdate);
 
             res.status(200).json({
                 status: "success",
@@ -314,6 +320,18 @@ const productController = {
             const categoryId = req.params.categoryId;
             const minPrice = req.query.minPrice;
             const maxPrice = req.query.maxPrice;
+            const sortType = req.query.sortType;
+            const page = req.query.page || 1;
+            const limit = page * DB_RESOURCE.LIMIT_RECORD;
+            const skipRecords = (page - 1) * DB_RESOURCE.LIMIT_RECORD;
+
+            const totalCount = await Product.countDocuments({
+                category: categoryId,
+                price: { $gte: minPrice, $lte: maxPrice },
+            });
+            const totalPages = Math.ceil(totalCount / DB_RESOURCE.LIMIT_RECORD);
+
+            const hasMoreItems = page < totalPages;
 
             const category = await Category.findOne({
                 _id: categoryId,
@@ -324,10 +342,45 @@ const productController = {
                     message: "This category not found!",
                 });
 
-            const products = await Product.find({
-                category: categoryId,
-                price: { $gte: minPrice, $lte: maxPrice },
-            });
+            let products = [];
+
+            switch (Number(sortType)) {
+                case 1:
+                    products = await Product.find({
+                        category: categoryId,
+                        price: { $gte: minPrice, $lte: maxPrice },
+                    })
+                        .limit(limit)
+                        .skip(skipRecords)
+                        .sort({ price: -1 });
+                    break;
+                case 2:
+                    products = await Product.find({
+                        category: categoryId,
+                        price: { $gte: minPrice, $lte: maxPrice },
+                    })
+                        .limit(limit)
+                        .skip(skipRecords)
+                        .sort({ price: 1 });
+                    break;
+                case 3:
+                    products = await Product.find({
+                        category: categoryId,
+                        price: { $gte: minPrice, $lte: maxPrice },
+                    })
+                        .limit(limit)
+                        .skip(skipRecords)
+                        .sort({ discount: -1 });
+                    break;
+                default:
+                    products = await Product.find({
+                        category: categoryId,
+                        price: { $gte: minPrice, $lte: maxPrice },
+                    })
+                        .limit(limit)
+                        .skip(skipRecords);
+                    break;
+            }
 
             if (products.length === 0)
                 return res.status(200).json({
@@ -350,20 +403,104 @@ const productController = {
                 const sizes = await Size.find({
                     _id: { $in: product.sizes },
                 });
-                product = { ...product._doc, thumbnails, sizes };
+                const colors = await Color.find({
+                    _id: { $in: product.colors },
+                });
+                product = { ...product._doc, thumbnails, sizes, colors };
                 listProducts.push(product);
             }
 
             res.status(200).json({
                 status: "success",
                 result: products.length,
-                data: { products: listProducts },
+                data: { products: listProducts, hasMoreItems },
             });
         } catch (error) {
             return res.status(500).json({
                 status: "failed",
                 message: error.message,
             });
+        }
+    }),
+
+    //[GET] -> /product/discount
+    getProductDiscount: asyncHandle(async (req, res, next) => {
+        try {
+            const page = req.query.page || 1;
+            const sortType = req.query.sortType;
+            const limit = page * DB_RESOURCE.LIMIT_RECORD;
+            const skipRecords = (page - 1) * DB_RESOURCE.LIMIT_RECORD;
+
+            const totalCount = await Product.countDocuments({ discount: { $gt: 0 } });
+            const totalPages = Math.ceil(totalCount / DB_RESOURCE.LIMIT_RECORD);
+
+            let products = [];
+
+            const hasMoreItems = page < totalPages;
+
+            switch (Number(sortType)) {
+                case 1:
+                    products = await Product.find({ discount: { $gt: 0 } })
+                        .limit(limit)
+                        .skip(skipRecords)
+                        .sort({ price: -1 });
+                    break;
+                case 2:
+                    products = await Product.find({ discount: { $gt: 0 } })
+                        .limit(limit)
+                        .skip(skipRecords)
+                        .sort({ price: 1 });
+                    break;
+                case 3:
+                    products = await Product.find({ discount: { $gt: 0 } })
+                        .limit(limit)
+                        .skip(skipRecords)
+                        .sort({ discount: -1 });
+                    break;
+                default:
+                    products = await Product.find({ discount: { $gt: 0 } })
+                        .limit(limit)
+                        .skip(skipRecords);
+                    break;
+            }
+
+            const listProducts = [];
+
+            if (products.length === 0)
+                return res.status(200).json({
+                    status: "Success",
+                    message: "No data",
+                    data: { listProducts },
+                });
+
+            for (let product of products) {
+                product = await product.populate("category", "name");
+
+                const thumbnails = await Thumbnail.find(
+                    {
+                        _id: { $in: product.thumbnails },
+                    },
+                    "url urlId -_id"
+                );
+
+                const sizes = await Size.find({
+                    _id: { $in: product.sizes },
+                });
+
+                const colors = await Color.find({
+                    _id: { $in: product.colors },
+                });
+                product = { ...product._doc, thumbnails, sizes, colors };
+                listProducts.push(product);
+            }
+
+            res.status(200).json({
+                status: "success",
+                result: listProducts.length,
+                data: { listProducts, hasMoreItems },
+            });
+        } catch (error) {
+            return res.json(error);
         }
     }),
 };

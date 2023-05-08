@@ -34,12 +34,21 @@ const orderController = {
 
             const listProducts = [];
             const { products } = req.body;
-
-            for (let product of products) {
-                const productOrder = await Product.findOne({ name: product.name });
-                const productId = productOrder._id;
-                product = { _id: productId, ...product };
-                listProducts.push(product);
+            if (Array.isArray(products)) {
+                for (let product of products) {
+                    product = JSON.parse(product);
+                    await Product.updateOne(
+                        { _id: product._id },
+                        { $inc: { quantity: -product.quantity } }
+                    );
+                    listProducts.push(product);
+                }
+            } else {
+                const product = JSON.parse(products);
+                await Product.updateOne(
+                    { _id: product._id },
+                    { $inc: { quantity: -product.quantity } }
+                );
             }
 
             const order = new Order({ ...req.body, userId: userId, products: listProducts });
@@ -112,6 +121,31 @@ const orderController = {
             res.status(200).json({
                 status: "Success",
                 data: order,
+            });
+        } catch (error) {
+            return res.status(500).json({
+                status: "Failed",
+                message: error.message,
+            });
+        }
+    }),
+
+    //[GET] -> /order
+    getOrdersByUserId: asyncHandle(async (req, res, next) => {
+        try {
+            const userId = req.userId;
+            const orders = await Order.find({ userId: userId });
+
+            if (orders.length === 0)
+                return res.status(200).json({
+                    status: "Success",
+                    message: "no data",
+                });
+
+            return res.status(200).json({
+                status: "Success",
+                result: orders.length,
+                data: { orders },
             });
         } catch (error) {
             return res.status(500).json({

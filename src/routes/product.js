@@ -6,6 +6,7 @@ const checkAdmin = require("../middleware/verifyAdmin");
 
 const productController = require("../app/controllers/productController");
 
+router.get("/discount", productController.getProductDiscount);
 router.get("/category/:categoryId", productController.getProductsByCategoryId);
 router.patch("/restore/:id", verifyAccessToken, checkAdmin, productController.restoreProduct);
 router.delete("/delete/:id", verifyAccessToken, checkAdmin, productController.deleteProduct);

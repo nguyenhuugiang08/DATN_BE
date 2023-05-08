@@ -7,7 +7,9 @@ const Product = new Schema({
     name: { type: String, required: true, trim: true },
     price: { type: Number, required: true },
     quantity: { type: Number, required: true, default: 1 },
+    discount: { type: Number, required: true, default: 0 },
     total: { type: Number, required: true, default: 0 },
+    thumbnail: { type: String, required: true },
 });
 
 const OrderSchema = new Schema(
@@ -42,7 +44,7 @@ const OrderSchema = new Schema(
                 required: true,
             },
         ],
-        city: {
+        conscious: {
             type: String,
         },
         district: {
