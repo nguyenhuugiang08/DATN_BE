@@ -21,3 +21,4 @@ router.post("/logout", authController.logout);
 router.get("/", verifyAccessToken, checkAdmin, authController.getUsers);
 
 module.exports = router;
+1

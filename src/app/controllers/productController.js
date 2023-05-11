@@ -322,7 +322,7 @@ const productController = {
             const maxPrice = req.query.maxPrice;
             const sortType = req.query.sortType;
             const page = req.query.page || 1;
-            const limit = page * DB_RESOURCE.LIMIT_RECORD;
+            const limit = DB_RESOURCE.LIMIT_RECORD;
             const skipRecords = (page - 1) * DB_RESOURCE.LIMIT_RECORD;
 
             const totalCount = await Product.countDocuments({
@@ -386,7 +386,7 @@ const productController = {
                 return res.status(200).json({
                     status: "Success",
                     message: "No data",
-                    data: { products },
+                    data: { products, hasMoreItems },
                 });
 
             const listProducts = [];
@@ -428,7 +428,7 @@ const productController = {
         try {
             const page = req.query.page || 1;
             const sortType = req.query.sortType;
-            const limit = page * DB_RESOURCE.LIMIT_RECORD;
+            const limit = DB_RESOURCE.LIMIT_RECORD;
             const skipRecords = (page - 1) * DB_RESOURCE.LIMIT_RECORD;
 
             const totalCount = await Product.countDocuments({ discount: { $gt: 0 } });

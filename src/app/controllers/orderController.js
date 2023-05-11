@@ -49,6 +49,7 @@ const orderController = {
                     { _id: product._id },
                     { $inc: { quantity: -product.quantity } }
                 );
+                listProducts.push(product);
             }
 
             const order = new Order({ ...req.body, userId: userId, products: listProducts });
@@ -81,9 +82,14 @@ const orderController = {
                 });
 
             if (
-                !["Chờ xác nhận", "Chờ lấy hàng", "Đang giao", "Đã giao", "Đã thanh toán"].includes(
-                    newStatus
-                )
+                ![
+                    "Chờ xác nhận",
+                    "Chờ lấy hàng",
+                    "Đang giao",
+                    "Đã giao",
+                    "Đã hủy",
+                    "Đã thanh toán",
+                ].includes(newStatus)
             ) {
                 return res.status(404).json({
                     status: "Failed",
